@@ -75,10 +75,43 @@ const loginService = async (email, password) => {
   }
 };
 
-const getUserService = async () => {
+const getUserService = async (page = 1, limit = 10) => {
   try {
-    let result = await User.find({}).select("-password");
-    return result;
+    // Convert page and limit to numbers and set defaults
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 10;
+
+    // Calculate skip value for pagination
+    const skip = (pageNum - 1) * limitNum;
+
+    // Get total count for pagination info
+    const totalUsers = await User.countDocuments({});
+
+    // Get users with pagination
+    const users = await User.find({})
+      .select("-password")
+      .skip(skip)
+      .limit(limitNum)
+      .sort({ createdAt: -1 }); // Sort by newest first
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(totalUsers / limitNum);
+    const hasNextPage = pageNum < totalPages;
+    const hasPrevPage = pageNum > 1;
+
+    return {
+      users,
+      pagination: {
+        currentPage: pageNum,
+        totalPages,
+        totalUsers,
+        limit: limitNum,
+        hasNextPage,
+        hasPrevPage,
+        nextPage: hasNextPage ? pageNum + 1 : null,
+        prevPage: hasPrevPage ? pageNum - 1 : null
+      }
+    };
   } catch (error) {
     console.log(error);
     return null;

@@ -17,8 +17,29 @@ const handleLogin = async (req, res) => {
 };
 
 const getUser = async (req, res) => {
-  const data = await getUserService();
-  return res.status(200).json(data);
+  try {
+    const { page, limit } = req.query;
+    const data = await getUserService(page, limit);
+
+    if (data === null) {
+      return res.status(500).json({
+        EC: -1,
+        EM: "Lỗi server khi lấy danh sách user"
+      });
+    }
+
+    return res.status(200).json({
+      EC: 0,
+      EM: "Lấy danh sách user thành công",
+      DT: data
+    });
+  } catch (error) {
+    console.log("Error in getUser controller:", error);
+    return res.status(500).json({
+      EC: -1,
+      EM: "Lỗi server khi lấy danh sách user"
+    });
+  }
 };
 
 const getAccount = async (req, res) => {
